@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Clima</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+body{
+  margin:0;
+  font-family:sans-serif;
+  color:#202124;
+  background: linear-gradient(to bottom,#87ceeb,#dff6ff,#f6f8fb);
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 40px;
+}
+
+.title{
+  font-size:28px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.title i{
+  color:#4a90e2;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+}
+
+.clock-top{
+  font-size:14px;
+  color:#333;
+  background:rgba(255,255,255,0.55);
+  padding:6px 12px;
+  border-radius:10px;
+}
+
+/* TEMPERATURA */
+.temp-row{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  padding:10px 40px;
+}
+
+.location{
+  font-size:13px;
+  color:#666;
+  margin-bottom:6px;
+}
+
+.temp-line{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.temp{
+  font-size:78px;
+  font-weight:600;
+  color:#2f3b45;
+}
+
+.temp-icon{
+  font-size:60px;
+  color:#ffb347;
+  filter: drop-shadow(0 3px 10px rgba(0,0,0,0.25));
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:15px;
+  padding:0 20px;
+}
+
+.card{
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 40px;
+  padding: 15px;
+  text-align: center;
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  /* NUEVO */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.card:hover{
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.icon{font-size:26px;color:#4a90e2;}
+.label{
+  font-size:13px;
+  color:#666;
+  margin-bottom:10px;
+  display:block;
+}
+.value{font-size:20px;font-weight:bold}
+
+.uv-gauge{
+  width:90px;
+  height:90px;
+  margin:10px auto;
+  position:relative;
+}
+
+.uv-gauge svg{
+  width:100%;
+  height:100%;
+  transform:rotate(-90deg);
+}
+
+.uv-bg{
+  fill:none;
+  stroke:#eee;
+  stroke-width:10;
+}
+
+.uv-progress{
+  fill:none;
+  stroke:#4a90e2;
+  stroke-width:10;
+  stroke-linecap:round;
+  stroke-dasharray:251;
+  stroke-dashoffset:251;
+  transition:0.5s ease;
+}
+
+.uv-value{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:16px;
+  font-weight:bold;
+}
+
+.charts{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+  padding:20px;
+}
+
+.chart{background:rgba(255,255,255,0.55);padding:10px;border-radius:12px;}
+
+canvas{
+  width:100%!important;
+  height:100%!important;
+}
+
+footer{text-align:center;padding:15px;color:#666;}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* ICONOS DE LAS TARJETAS */
+.icon i {
+  display: inline-block;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ICONO DEL SOL PRINCIPAL */
+.temp-icon i {
+  display: inline-block;
+  animation: float 3.5s ease-in-out infinite;
+}
+
+/* ICONO DEL TÍTULO */
+.title i {
+  animation: float 4s ease-in-out infinite;
+}
+
+.bar{
+  width:100%;
+  height:8px;
+  background:rgba(0,0,0,0.08);
+  border-radius:20px;
+  margin-top:10px;
+  overflow:hidden;
+}
+
+.bar-fill{
+  height:100%;
+  width:0%;
+  border-radius:20px;
+  transition:width 0.6s ease;
+}
+
+.gauge{
+  position:relative;
+  width:100px;
+  height:100px;
+  margin:10px auto;
+}
+
+.gauge svg{
+  width:100%;
+  height:100%;
+  transform:rotate(-90deg);
+}
+
+.gauge-bg{
+  fill:none;
+  stroke:#eee;
+  stroke-width:10;
+}
+
+.gauge-track{
+  fill:none;
+  stroke:#4a90e2;
+  stroke-width:10;
+  opacity:0.2;
+}
+
+.gauge-value{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  font-size:14px;
+  font-weight:bold;
+}
+
+/*  AGUJA */
+.needle{
+  position:absolute;
+  width:2px;
+  height:40px;
+  background:#e53935;
+  top:10px;
+  left:50%;
+  transform-origin:bottom;
+  transform:rotate(-90deg);
+  border-radius:2px;
+  transition:transform 0.6s ease;
+}
+
+.pred-list{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:13px;
+}
+
+.pred-list div{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.pred-list i{
+  color:#4a90e2;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* =========================
+   RESPONSIVE FINAL (FIX)
+   ========================= */
+
+/* Tablets */
+@media (max-width: 1024px) {
+
+  .grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .charts{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .temp{
+    font-size:60px;
+  }
+}
+
+/* Tablets pequeñas / celulares grandes */
+@media (max-width: 768px) {
+
+  header{
+    flex-direction:column;
+    gap:10px;
+    text-align:center;
+  }
+
+  .grid{
+    grid-template-columns:repeat(2,1fr);
+    padding:10px;
+  }
+
+  .charts{
+    grid-template-columns:1fr;
+  }
+
+  .temp{
+    font-size:52px;
+  }
+
+  .temp-icon{
+    font-size:45px;
+  }
+
+  .title{
+    font-size:22px;
+  }
+
+  .card{
+    border-radius:25px;
+  }
+}
+
+/* Celulares pequeños */
+@media (max-width: 480px) {
+
+  body{
+    overflow-x:hidden;
+  }
+
+  header{
+    padding:10px;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+    padding:10px;
+  }
+
+  .charts{
+    padding:10px;
+  }
+
+  .temp{
+    font-size:40px;
+  }
+
+  .temp-icon{
+    font-size:35px;
+  }
+
+  .clock-top{
+    font-size:12px;
+  }
+
+  .card{
+    border-radius:20px;
+    padding:12px;
+  }
+
+  canvas{
+    height:120px!important;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="title">
+    <i class="fa-solid fa-cloud-sun"></i>
+    Pronóstico del tiempo
+  </div>
+  <div class="clock-top" id="clock"></div>
+</header>
+
+<div class="temp-row">
+  <div class="location">Sogamoso, Boyacá</div>
+
+  <div class="temp-line">
+    <div class="temp">
+      <span id="tempVal">--</span>°
+    </div>
+    <div class="temp-icon">
+      <i class="fa-solid fa-sun"></i>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+
+  <div class="card">
+  <div class="icon"><i class="fa-solid fa-droplet"></i></div>
+  <div class="label">Humedad</div>
+
+  <div class="value" id="hum">--</div>
+
+  <div class="bar">
+    <div class="bar-fill" id="humBar"></div>
+  </div>
+</div>
+
+  <div class="card">
+  <div class="icon"><i class="fa-solid fa-gauge-high"></i></div>
+  <div class="label">Presión</div>
+
+  <div class="gauge">
+    <svg viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="40" class="gauge-bg"></circle>
+      <circle cx="50" cy="50" r="40" class="gauge-track"></circle>
+    </svg>
+
+    <div class="needle" id="presNeedle"></div>
+
+    <div class="gauge-value" id="pres">--</div>
+  </div>
+</div>
+
+  <div class="card">
+    <div class="icon"><i class="fa-solid fa-sun"></i></div>
+    <div class="label">UV</div>
+    <div class="uv-gauge">
+      <svg viewBox="0 0 100 100">
+        <circle class="uv-bg" cx="50" cy="50" r="40"></circle>
+        <circle class="uv-progress" cx="50" cy="50" r="40" id="uvProgress"></circle>
+      </svg>
+      <div class="uv-value" id="uv">--</div>
+    </div>
+  </div>
+
+  <div class="card">
+  <div class="icon"><i class="fa-solid fa-lightbulb"></i></div>
+  <div class="label">Luz</div>
+
+  <div class="value" id="light">--</div>
+
+  <div class="bar">
+    <div class="bar-fill" id="lightBar"></div>
+  </div>
+</div>
+
+  <div class="card">
+  <div class="icon"><i class="fa-solid fa-cloud"></i></div>
+  <div class="label">Predicciones del Clima</div>
+
+  <div class="pred-list">
+    <div><i class="fa-solid fa-sun"></i> Luz: <b id="lightVisible">--</b>%</div>
+    <div><i class="fa-solid fa-cloud"></i> Nubes: <b id="cloudCover">--</b>%</div>
+    <div><i class="fa-solid fa-bolt"></i> Tormenta: <b id="stormProb">--</b>%</div>
+    <div><i class="fa-solid fa-cloud-rain"></i> Lluvia: <b id="rainProb">--</b>%</div>
+  </div>
+</div>
+
+  <div class="card">
+    <div class="label">🌡️ Últimas temperaturas</div>
+    <div id="tempHistory"></div>
+  </div>
+
+</div>
+
+<div class="charts">
+  <div class="chart"><canvas id="c1"></canvas></div>
+  <div class="chart"><canvas id="c2"></canvas></div>
+  <div class="chart"><canvas id="c3"></canvas></div>
+  <div class="chart"><canvas id="c4"></canvas></div>
+</div>
+
+<footer>© 2026 — Todos los derechos reservados</footer>
+
+
+<script>
+
+const MAIN_URL =
+"https://api.thingspeak.com/channels/3382515/feeds.json?api_key=U7FLYM9CLIEA0Z0T&results=20";
+
+const PRED_URL =
+"https://api.thingspeak.com/channels/3376487/feeds.json?api_key=MNWBIURH5PMSSJQS&results=20";
+function setBackground(light, rain, storm, uv){
+
+  let body = document.body;
+
+  // 🌩️ Tormenta (prioridad alta)
+  if(storm > 50){
+    body.style.background = "linear-gradient(to bottom,#2c3e50,#34495e,#1b2631)";
+  }
+
+  // 🌧️ Lluvia
+  else if(rain > 50){
+    body.style.background = "linear-gradient(to bottom,#4b6cb7,#182848,#2c3e50)";
+  }
+
+  // ☁️ Nublado
+  else if(light < 200){
+    body.style.background = "linear-gradient(to bottom,#bdc3c7,#95a5a6,#ecf0f1)";
+  }
+
+  // ☀️ Soleado (UV alto o luz alta)
+  else if(light > 600 || uv > 6){
+    body.style.background = "linear-gradient(to bottom,#87ceeb,#f6d365,#fda085)";
+  }
+
+  // 🌤️ Normal
+  else{
+    body.style.background = "linear-gradient(to bottom,#87ceeb,#dff6ff,#f6f8fb)";
+  }
+}
+
+function mk(ctx, yLabel){
+  return new Chart(ctx,{
+    type:'line',
+    data:{labels:[],datasets:[{
+  data:[],
+  borderColor:'#4a90e2',
+  tension:0.4,
+  cubicInterpolationMode: 'monotone',
+  pointRadius: 0
+}]},
+    options:{
+  plugins:{
+    legend:{display:false},
+    tooltip:{
+      enabled:true,
+      mode:'index',
+      intersect:false,
+      callbacks:{
+        label:function(context){
+          return context.parsed.y + " " + yLabel;
+        }
+      }
+    }
+  },
+
+  interaction:{
+    mode:'index',
+    intersect:false
+  },
+
+  scales:{
+  x:{
+    title:{display:true,text:"Hora"},
+    grid:{display:false},     // ❌ quita líneas verticales
+    border:{display:false}    // ❌ quita línea del eje X
+  },
+  y:{
+    title:{display:true,text:yLabel},
+    grid:{display:false},     // ❌ quita líneas horizontales
+    border:{display:false}    // ❌ quita línea del eje Y
+  }
+}
+}
+  });
+}
+
+function setWeatherIcon(light, rain, storm, uv){
+
+  const icon = document.getElementById("weatherIcon");
+
+  if(storm > 40){
+    icon.className = "fa-solid fa-bolt";
+    icon.style.color = "#7c4dff";
+    return;
+  }
+
+  if(rain > 40){
+    icon.className = "fa-solid fa-cloud-showers-heavy";
+    icon.style.color = "#2196f3";
+    return;
+  }
+
+  if(uv > 6 || light > 700){
+    icon.className = "fa-solid fa-sun";
+    icon.style.color = "#ffb300";
+    return;
+  }
+
+  if(light > 300){
+    icon.className = "fa-solid fa-cloud-sun";
+    icon.style.color = "#90caf9";
+    return;
+  }
+
+  icon.className = "fa-solid fa-cloud";
+  icon.style.color = "#78909c";
+}
+
+let charts = [
+  mk(document.getElementById("c1"),"Humedad (%)"),
+  mk(document.getElementById("c2"),"Presión (hPa)"),
+  mk(document.getElementById("c3"),"UV"),
+  mk(document.getElementById("c4"),"Luz (lux)")
+];
+
+function clock(){
+  document.getElementById("clock").innerText =
+    new Date().toLocaleTimeString();
+}
+clock();
+setInterval(clock,1000);
+
+async function load(){
+
+  const r1 = await fetch(MAIN_URL);
+  const d1 = await r1.json();
+
+  const r2 = await fetch(PRED_URL);
+  const d2 = await r2.json();
+
+  let feeds = d1.feeds;
+  let pfeeds = d2.feeds;
+
+  let labels=[];
+  let uv=[],temp=[],hum=[],pres=[],light=[];
+
+  feeds.forEach(f=>{
+    uv.push(+f.field1);
+    temp.push(+f.field2);
+    hum.push(+f.field3);
+    pres.push(+f.field4);
+    light.push(+f.field5);
+    let date = new Date(f.created_at);
+
+// agrupar en bloques de 4 minutos
+let minutes = date.getMinutes();
+let rounded = Math.floor(minutes / 4) * 4;
+
+date.setMinutes(rounded);
+date.setSeconds(0);
+
+labels.push(
+  date.getHours().toString().padStart(2,'0') + ":" +
+  rounded.toString().padStart(2,'0')
+);
+  });
+
+  let p = pfeeds.at(-1);
+
+  
+  document.getElementById("lightVisible").innerText =
+    p?.field5 != null ? Number(p.field5).toFixed(3) : "--";
+
+  document.getElementById("cloudCover").innerText =
+    p?.field6 != null ? Number(p.field6).toFixed(3) : "--";
+
+  document.getElementById("stormProb").innerText =
+    p?.field7 != null ? Number(p.field7).toFixed(3) : "--";
+
+  document.getElementById("rainProb").innerText =
+    p?.field8 != null ? Number(p.field8).toFixed(3) : "--";
+
+  document.getElementById("tempVal").innerText = temp.at(-1);
+  let humVal = hum.at(-1);
+
+document.getElementById("hum").innerText = humVal + "%";
+
+let humBar = document.getElementById("humBar");
+humBar.style.width = humVal + "%";
+humBar.style.background = "linear-gradient(90deg,#4a90e2,#00c6ff)";
+  let presVal = Number(pres.at(-1));
+
+document.getElementById("pres").innerText = presVal + " hPa";
+let needle = document.getElementById("presNeedle");
+
+if (needle && !isNaN(presVal)) {
+
+  let min = 950;
+  let max = 1050;
+
+  presVal = Math.max(min, Math.min(max, presVal));
+
+  let percent = (presVal - min) / (max - min);
+  let angle = -90 + (percent * 180);
+
+  needle.style.transform = `rotate(${angle}deg)`;
+}
+  let lightVal = light.at(-1);
+
+
+document.getElementById("light").innerText = lightVal + " lux";
+
+let lightPercent = (lightVal / 1000) * 100; // escala 0–1000 lux
+
+let lightBar = document.getElementById("lightBar");
+
+lightBar.style.width = Math.min(lightPercent, 100) + "%";
+
+//  color según intensidad
+lightBar.style.background =
+  lightVal < 300 ? "linear-gradient(90deg,#90a4ae,#b0bec5)" :
+  lightVal < 700 ? "linear-gradient(90deg,#fbc02d,#ffd54f)" :
+                   "linear-gradient(90deg,#ff9800,#ff5722)";
+
+  let uvVal = uv.at(-1);
+  
+  document.getElementById("uv").innerText = uvVal;
+
+  let progress = document.getElementById("uvProgress");
+  let percent = Math.min((uvVal / 10) * 251, 251);
+
+  progress.style.strokeDashoffset = 251 - percent;
+
+  if(uvVal < 3) progress.style.stroke = "green";
+  else if(uvVal < 6) progress.style.stroke = "orange";
+  else progress.style.stroke = "red";
+
+  document.getElementById("tempHistory").innerHTML =
+    temp.slice(-8).reverse().map(v=>`<div>${v}°C</div>`).join("");
+
+  const sets=[hum,pres,uv,light];
+
+  charts.forEach((c,i)=>{
+    c.data.labels = labels;
+    c.data.datasets[0].data = sets[i];
+    c.update();
+  });
+
+}
+
+load();
+setInterval(load,20000);
+
+</script>
+
+</body>
+</html>
